@@ -1,0 +1,449 @@
+---
+title: Will Trump's Tariffs Cause a Recession?
+subtitle: The Experts Weigh In
+author: Martina Regis
+date: "14 April 2025"
+date-format: "MMMM YYYY"
+toc: true
+number-sections: false  
+theme: cerulean 
+format:
+  html: 
+    fig-height: 4
+    fig-width: 7
+    code-fold: false
+    embed-resources: true
+    toc-location: right
+    toc-title: "Contents"
+    page-layout: article
+    fontsize: 1.1em
+    linestretch: 1.5
+    backgroundcolor: '#DDEAF2'
+---
+
+<style>
+    .my_custom-section {
+        background-color: #181c5c;
+        color: white;
+        padding: 10px;
+        font-size: 18px;
+    }
+
+</style>
+
+```{r}
+#| label: load-pkgs
+#| code-summary: "Packages"
+#| echo: false
+#| message: false
+#| warning: false
+
+library(wbstats)    # for data
+library(tidyverse)  # for data wrangling
+library(knitr)      # for tables
+library(broom)      # for model summary
+
+my_palette2<- c(
+  "#181c5c", 
+  "#75ABFA", 
+  "#ECB100",
+  "#085006", 
+  "#FC842B",
+  "#04062C", 
+  "#75ABFA", 
+  "#387176",
+  "#e6eeff",
+  "#4E2029", 
+  "#DDEAF2",
+  "#900C3F",
+  "#FC7748",
+  "#BEA19A",
+  "#292929",
+  "#7393B3",
+  "#0096FF",
+  "#1F51FF"
+  )
+```
+
+
+![Photo credit: Kabul News](tariffwar.jpg)
+
+## Introduction
+
+A global trade war is brewing with potentially little possibility of de-escalating. Since 1 February 2025, the United States has initiated a series of significant tariff announcements. The timeline began with the implementation of a 25  percent tariff on imports from Canada and Mexico, excluding energy for Canada which faced a 10 percent levy, effective 4 March 2025. This was followed by an increase in tariffs on Chinese goods, rising to 20  percent on 4 March and then escalating further to a total of 145  percent on most Chinese imports by 9 April, with some exceptions like smartphones. 
+
+Simultaneously, a universal 10 percent reciprocal tariff on imports from most countries, excluding USMCA partners and others, took effect on 5 April. The situation saw a shift on 9 April with a surprise announcement of a 90-day pause on these country-specific reciprocal tariffs, reverting to the baseline 10 percent for the affected nations, while the heightened tariffs of 145  percent on China remained in place.
+
+<img src="china-us.jpg" style="float:right" width="430" height="300"/>
+
+## Market Reaction 
+Since the announcements began, the market has reacted almost immediately. Key equity indices have declined, and the US dollar has weakened since February 2025. In March 2025, the OECD lowered its growth forecast for the world economy and major economies due to the rise in tariff concerns (@fig-oecd).
+
+The Federal Open Market Committee, in its March review, noted that it expects core personal consumption expenditure inflation—which excludes food and energy prices—to be 2.8 percent this year, up from its projection of 2.5 percent a quarter back.  
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: fig-oecd
+#| fig-cap: "OECD Revisions - March 2025"
+# Load libraries and data.
+library(tidyverse)       
+library(quantmod)
+library(plotly)              
+library(scales)       
+library(wbstats)  
+load("oecd_revisions.RData")
+p2<-ggplot(oecd_revisions, aes(x = Country, y = Value, fill = Date)) +
+  geom_bar(stat = "identity", position =  position_dodge()) +
+  coord_flip() + # Flip to create a horizontal bar chart
+  labs(
+    title = "OECD Lowers Growth Forecast over Tariff Concerns",
+    x = "",
+    y = "%",
+    caption = 'Source: OECD',
+    subtitle = 'Year-on-Year Growth Projections for 2025',
+  ) +
+  theme_minimal()+
+  scale_y_continuous(limits = c(-2, 5)) +
+  geom_text(aes(label = paste0(sprintf("%.1f", Value), "%")), position = position_dodge(width = 0.9), hjust = 1.2, size = 3.9, face = "bold", color = "black") + # Add text labels
+  scale_fill_manual(values = c(my_palette2[2], my_palette2[18])) + # Select colors from palette
+  guides(fill = guide_legend(reverse = TRUE))+
+  theme(plot.title = element_text(color = "black", size = rel(1.0), face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = rel(0.8), face = "bold", hjust = 0.5),
+        plot.caption = element_text(face = "italic", hjust = 0.5, size = rel(0.6)),
+        axis.text = element_text(size = rel(0.9), face = "bold", color = "black"),
+        legend.position = 'bottom',
+        legend.key.size = unit(0.5, "lines"),
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = my_palette2[11],
+                                       color = NA),
+        panel.background = element_rect(fill = my_palette2[11],
+                                        color = NA))
+ggplotly(p2)
+```
+
+
+In a sign that a weakening stock market and uncertainty about government spending and trade policy was taking a toll, US consumer confidence fell from tariff news (@fig-sentiment), with long-term inflation expectations hitting a 32-year high. Worries about tariffs forced inflation expectations up. The University of Michigan’s one-year-ahead inflation figure surged to a 28-month high of 4.9 percent in March. The rise in inflation may turn out to be transitory, especially if a onetime tariff hike slows aggregate demand growth in the economy, but, a series of tariff rate increases, including retaliation by trade partners may lead to a more sustained increase in consumer prices over time.
+
+```{r}
+#| echo: false
+#| warning: false
+#| results: 'hide'
+#| label: fig-sentiment
+#| fig-cap: "Consumer Sentiment - University of Michigan"
+# Load libraries and data.
+library(tidyverse)       # Data management
+library(quantmod) #financial online data from fred
+library(scales) #axis labels
+library(zoo)
+library(gtsummary)  
+
+# Get the University of Michigan Consumer Sentiment Index data from FRED
+getSymbols("UMCSENT", src = "FRED")
+
+# Convert the data to a data frame for ggplot2
+sentiment_df <- data.frame(Date = index(UMCSENT), 
+                           Sentiment = coredata(UMCSENT))
+
+# UPLAOD RECESSIONS DATA AND PLOT
+recessions.df = read.table(textConnection(
+  "Peak, Trough
+1857-06-01, 1858-12-01
+1860-10-01, 1861-06-01
+1865-04-01, 1867-12-01
+1869-06-01, 1870-12-01
+1873-10-01, 1879-03-01
+1882-03-01, 1885-05-01
+1887-03-01, 1888-04-01
+1890-07-01, 1891-05-01
+1893-01-01, 1894-06-01
+1895-12-01, 1897-06-01
+1899-06-01, 1900-12-01
+1902-09-01, 1904-08-01
+1907-05-01, 1908-06-01
+1910-01-01, 1912-01-01
+1913-01-01, 1914-12-01
+1918-08-01, 1919-03-01
+1920-01-01, 1921-07-01
+1923-05-01, 1924-07-01
+1926-10-01, 1927-11-01
+1929-08-01, 1933-03-01
+1937-05-01, 1938-06-01
+1945-02-01, 1945-10-01
+1948-11-01, 1949-10-01
+1953-07-01, 1954-05-01
+1957-08-01, 1958-04-01
+1960-04-01, 1961-02-01
+1969-12-01, 1970-11-01
+1973-11-01, 1975-03-01
+1980-01-01, 1980-07-01
+1981-07-01, 1982-11-01
+1990-07-01, 1991-03-01
+2001-03-01, 2001-11-01
+2007-12-01, 2009-06-01
+2020-01-01, 2020-06-01"), 
+  sep=',',
+  colClasses=c('Date', 'Date'), 
+  header=TRUE)
+recessions.trim = subset(recessions.df, Peak >= min(sentiment_df$Date) )
+
+ggplot(sentiment_df) + 
+  geom_line(aes(x=Date, y=UMCSENT), color = my_palette2[6]) + 
+  geom_rect(data=recessions.trim, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), 
+                    fill='skyblue', alpha=0.6)+
+  theme_minimal()+
+  labs(
+    title = "University of Michigan \nConsumer Sentiment Index with Recessions",
+    x = "",
+    y = "Sentiment Index",
+    subtitle = 'Signs of declining sentiment',
+    caption = "Source: Federal Reserve"
+) +
+  theme(plot.title = element_text(color = "black", size = rel(1.0), face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = rel(0.8), face = "bold", hjust = 0.5),
+        plot.caption = element_text(face = "italic", hjust = 1, size = rel(0.6)),
+        plot.background = element_rect(fill = my_palette2[11],
+                                       color = NA),
+        panel.background = element_rect(fill = my_palette2[11],
+                                        color = NA))+
+  scale_x_date(date_breaks = "3 years", 
+               labels=date_format("%Y"),
+               limits = as.Date(c('1980-01-01','2025-01-01')))
+```
+
+
+A [July 2024 blog](https://www.imf.org/en/Blogs/Articles/2023/08/28/the-high-cost-of-global-economic-fragmentation#:~:text=In%20a%20shock%2Dprone%20world,expose%20the%20global%20economy's%20fragility.) by the IMF warned that escalating international trade restrictions could lead to a substantial decline in global economic output. The Fund's analysis suggests the potential for a long-term reduction of up to 7  percent, equivalent to approximately $7.4 trillion in 2024 dollars. This reversal would harm the global cooperation necessary to effectively respond to emerging global shocks.
+
+
+## Shifting Trade Polices
+
+President Trump's rapidly changing tariff policies have rattled markets and destabilized international trade. For instance, after his Liberation Day announcments regarding "reciprocal tariffs", Trump surprised the market yet again on 10 April when he announced a 90-day pause on these country-specific tariffs although maintaining 10 percent baseline duties and 145 percent tariffs on China. Subsequently, an exemption was announced for Chinese-made consumer electronics like smartphones, computers, and semiconductors, though these products remained subject to a previously imposed 20 percent tariff. However, Commerce Secretary Howard Lutnick later retracted this announcement, stating the exemption was not permanent.
+
+Fears of a significant economic downturn are widespread due to President Trump's shifting tariff policies. Many economists warn that this "trade war" could push the global economy into recession by disrupting supply chains, reducing production, and increasing unemployment.
+
+According to The Wall Street Journal, Goldman Sachs reported in April 2025 that the likelihood of a U.S. recession within the next 12 months has increased from 35 percent to 45 percent. The financial firm cautioned that if tariff policies are not contained, an economic downturn may be inevitable. Even with the 90-day pause, many analysts sare not confident that the risk of a tariff-induced recession has been diffused
+
+Although stock prices do not perfectly reflect economic growth, equity investors are increasingly factoring in a higher probability of a U.S. economic decline. The S&P 500 briefly entered bear market territory, experiencing a substantial loss in market value, particularly in sectors highly susceptible to an economic slowdown, such as the AI sector such as Nvidia.
+
+```{r}
+#| echo: false
+#| warning: false
+#| results: 'hide'
+#| label: fig-djia
+#| fig-cap: "Proxy of Stock Index - Dow Jones Industrial Average"
+# Get Dow Jones Industrial Average data from Yahoo Finance (^DJI)
+getSymbols("^DJI", src = "yahoo", from = "2000-01-01") # Adjust 'from' date as needed
+
+# Extract adjusted closing prices
+dow_prices <- DJI[, "DJI.Adjusted"]
+
+# Convert to data frame for ggplot2
+dow_df <- data.frame(Date = index(dow_prices), Price = coredata(dow_prices))
+colnames(dow_df)[2] = "Price"
+save(dow_df, file = "dow_df.RData")
+
+recession_dates <- data.frame(start = as.Date(c("2001-03-01", "2007-12-01", "2020-02-01")),
+                               end = as.Date(c("2001-11-01", "2009-06-01", "2020-04-01")))
+ggplot(dow_df, aes(x = Date, y = Price)) +
+  geom_line(color = my_palette2[6]) +
+  geom_rect(data = recession_dates, aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+             fill = "skyblue", alpha = 0.7, inherit.aes = FALSE) +
+  annotate("text", x = as.Date("2022-02-01"), y = 43000, label = "DJIA has fallen\n by 4% since\n tariff announcement",
+           color = "black", size = 3.2, hjust = 0, vjust = 1, lineheight = 0.8) +
+  annotate("segment", x = as.Date("2025-03-28"), xend = as.Date("2025-05-30"), y = 45000, yend = 40000,
+           arrow = arrow(length = unit(0.3, "cm")), size = 1.3, color = "darkorange")+
+  labs(title = "Trends in the Dow Jones Industrial Average",
+       x = "Date",
+       y = "Adjusted Closing Price",
+      subtitle = "Stock indices tumbled following tariff announcements",
+      caption= "Source: Yahoo Finance \nShaded areas indicate U.S. recessions") +
+  theme_minimal() +
+  theme(plot.title = element_text(color = "black", size = rel(1.0), face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = rel(0.8), face = "bold", hjust = 0.5),
+        plot.caption = element_text(face = "italic", hjust = 1, size = rel(0.6)),
+        plot.background = element_rect(fill = my_palette2[11],
+                                       color = NA),
+        panel.background = element_rect(fill = my_palette2[11],
+                                        color = NA))+
+  scale_x_date(date_breaks = "3 years", date_labels = "%Y") 
+```
+
+[Kristalina Georgieva](https://mediacenter.imf.org/news/imf-georgieva-global-growth---recession/s/85b84966-1388-42cb-833b-4e488cbca74f), Managing Director of the IMF, has noted that the Fund has revised its global economic growth forecasts downward due to trade disruptions. While the IMF does not currently predict a recession, it acknowledges that the prevailing high level of uncertainty elevates the risk of financial market instability.
+
+Goldman Sachs CEO David Solomon has indicated a rising likelihood of a recession. He notes that their clients, including corporate executives and institutional investors, are concerned about the significant short-term and long-term uncertainty, which is hindering their decision-making processes.
+
+The performance of key commodities also seem to suggest a potential global recession. As can be seen in @fig-gold, gold prices have risen by over 10 percent this year, reaching a record high, as investors seek refuge in this traditional safe-haven asset. Meanwhile, Brent Crude prices have fallen to their lowest level since 2021, reflecting concerns among traders about a possible decline in global oil demand due to slowing economic activity. Gold prices are also being driven by worries that increased tariffs will fuel inflation, in addition to ongoing geopolitical tensions.
+
+```{r}
+#| echo: false
+#| warning: false
+#| results: 'hide'
+#| label: fig-gold
+#| fig-cap: "Trends in Gold Price"
+# Get gold price data from Yahoo Finance (using the "GC=F" ticker)
+getSymbols("GC=F", src = "yahoo", from = "2000-01-01") # Adjust the 'from' date as needed
+
+# Extract the adjusted closing prices (most relevant for trend analysis)
+gold_prices <- `GC=F`[, "GC=F.Adjusted"]
+
+# Convert the data to a data frame for ggplot2
+gold_df <- data.frame(Date= index(gold_prices), Price = coredata(gold_prices))
+colnames(gold_df)[2] = "Price"
+
+# Trim and include historical recession data to match dataset
+recessions.trim2 = subset(recessions.df, Peak >= min(gold_df$Date) )
+ggplot(gold_df) + 
+  geom_line(aes(x=Date, y= Price), color = my_palette2[6]) + 
+  theme_minimal()+
+  geom_rect(data=recessions.trim2, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), 
+                    fill='skyblue', alpha=0.8)+
+  annotate("text", x = as.Date("2020-04-01"), y = 2800, label = "Gold prices\n have increased\n over 40%\n since 2024",
+           color = "black", size = 3.2, hjust = 0, vjust = 1, lineheight = 0.8) +
+  annotate("segment", x = as.Date("2023-01-01"), xend = as.Date("2025-01-01"), y = 2300, yend = 3000,
+           arrow = arrow(length = unit(0.3, "cm")), size = 1, color = "darkorange")+
+  labs(
+    title = "Gold Prices (Adjusted Closing) with Recessions",
+    subtitle = "The sharp increase since the tariff announcement \nis a sign of declining risk appetite",
+    x = "",
+    y = "Adj Price",
+    caption = "Source: Yahoo \nShaded areas indicate U.S. recessions") +
+  geom_hline(yintercept = 2000, linetype = "solid", size = 1, color = "red")+ # Add benchmark line
+  # Adjust plot limits to accommodate text
+  coord_cartesian(xlim = c(min(gold_df$Date), max(gold_df$Date) + 10))+
+  theme(plot.title = element_text(color = "black", size = rel(1.0), face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = rel(0.8), face = "bold", hjust = 0.5),
+        plot.caption = element_text(face = "italic", hjust = 1, size = rel(0.6)),
+        plot.background = element_rect(fill = my_palette2[11],
+                                       color = NA),
+        panel.background = element_rect(fill = my_palette2[11],
+                                        color = NA))+
+  scale_x_date(date_breaks = "3 years", 
+               labels=date_format("%Y"),
+               limits = as.Date(c('2000-01-01','2026-11-30')))
+```
+
+## Worse Than A Recession
+
+[Ray Dalio](https://www.cnbc.com/2025/04/13/billionaire-ray-dalio-im-worried-about-something-worse-than-a-recession.html), founder of Bridgewater, has voiced concerns about a potential breakdown of the global monetary system.  Dalio believes that the turmoil caused by President Trump's tariff and economic policies poses a threat to the global economy. He warned that the U.S. was nearing something "worse than a recession" and expressed worry about the possibility of an even more severe economic downturn if the situation is not well managed. His concerns include trade disruptions, increasing U.S. debt, and emerging world powers destabilizing the existing international economic and geopolitical order established after World War II. He perceives a shift away from multilateralism, which he associates with a U.S.-led global system, towards a unilateral world order characterized by significant conflict.
+
+[Lawrence Summers](https://www.bloomberg.com/news/articles/2025-04-08/summers-warns-us-likely-headed-to-recession-2-million-jobless), former Treasury Secretary under President Bill Clinton, stated in a New York Times editorial podcast that he estimates a 60 percent or higher proability of a recession starting this year. Summers elaborated that while the pause in tariff increases is preferable to the previous trajectory, it does not guarantee that the economic risks have been eliminated. More recently, Summers projected that a recession could lead to an additional 2 million Americans becoming unemployed, which would represent a more than 28  percent increase from the 7.1 million unemployed in March, and a decrease of $5,000 or more in annual household income.
+
+
+## Reaction of the Bond Market
+
+A concerning indicator that the Federal Reserve views as a strong predictor of recession was apparent in the bond market. in February 2025 the yield on the 10-year Treasury bond fell below the yield of the 3-month Treasury note. An 'inverted yield curve," has historically been a very good signal of economic downturns within the following 12 to 18 months. See @fig-spread.
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: fig-spread
+#| results: 'hide'
+#| fig-cap: "Spread between 10-year and 3-Month Treasuries"
+# Get the data from FRED
+getSymbols("T10Y3M", src = "FRED")
+
+# Convert the data to a data frame for ggplot2
+spread_df <- data.frame(date = index(T10Y3M), SPRD = coredata(T10Y3M))
+recessions.trim3 = subset(recessions.df, Peak >= min(spread_df$date) )
+g5 = ggplot(spread_df) + 
+  geom_line(aes(x=date, y=T10Y3M), color = my_palette2[6]) + 
+  theme_minimal()+ 
+  geom_rect(data=recessions.trim3, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), 
+                    fill='skyblue', alpha=0.4)+
+  labs(
+    title = "U.S. 10 Yr/3 M Spread with Recessions",
+    subtitle = '10-Year Treasury Minus 3-month Treasury Maturity',
+    caption = 'Source: Federal Reserve Bank of St. Louis via FRED \nShaded areas indicate U.S. recessions',
+    x = "",
+    y = "Spread") +
+  geom_hline(yintercept = 0, linetype = "dashed", size = 0.6, color = "red")+ # Add benchmark line+
+  theme(plot.title = element_text(color = "black", size = rel(1.0), face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = rel(0.8), hjust = 0.5),
+        plot.caption = element_text(face = "italic", hjust = 1, size = rel(0.6)),
+        plot.background = element_rect(fill = my_palette2[11],
+                                       color = NA),
+        panel.background = element_rect(fill = my_palette2[11],
+                                        color = NA))+
+  scale_x_date(date_breaks = "3 years", 
+               labels=date_format("%Y"),
+               limits = as.Date(c('2000-01-01','2025-03-14')))
+g5
+```
+
+The U.S. Treasury market recently experienced an unusual flight from this safe-haven asset, exacerbating market instability caused by Trump's "reciprocal" tariffs, which he later suspended. Some have speculated that China may be selling off U.S. Treasury bonds in response to tariffs imposed by President Trump. Yields on 10-year Treasuries surged to 4.592 percent by Friday, the highest since February, and 30-year Treasury bond yields reached their peak since November 2023 in April; although yields have since decreased slightly, they remain high, with a rise of about 50 basis points in the five days leading up to April 11. This sell-off of Treasuries was unexpected given rising recession fears and market volatility, as investors typically seek the safety of U.S. debt during such times, raising questions about who is selling and why.
+
+While China, the second-largest foreign holder of U.S. Treasury securities, may be selling Treasuries to buy Euros or German bunds, others argue that selling Treasuries would harm China by reducing the value of its remaining holdings and causing the yuan to appreciate. An analyst suggested that Japan's life insurers, concerned about U.S. policy instability, might be the primary sellers of Treasuries. One suggestion proposed was the possibility of Japan, the largest holder of U.S. debt, using Treasuries as a trade negotiation tool.
+
+The selling of long-dated Treasuries may also be driven by European and Japanese pension accounts shifting their investments to European fixed income. Current Treasury data, which lags, with April data not due until June, makes it difficult to determine the exact sellers and extent of their sales. 
+
+
+## Implications about US Hegemony and Rise of China
+
+<div class="my_custom-section">
+More broadly however, these speculations could be attributed to a growing lack of confidence in U.S. policies, especially given the inconsistency and volatility related to tariffs.  This has led to a diminishing appeal of Treasuries as a safe haven and a weakening the U.S. dollar. A further deterioration of market trust in the U.S. administration could trigger additional Treasury sell-offs.
+</div>
+
+<br>
+
+These developments have implications for the global eonomy. We may in fact be witnessing a potential erosion of the long-standing multilateral order and the singular dominance the U.S has held in international affairs since the mid-20th century. Simultaneously, China's remarkable economic ascent, fueled by its manufacturing prowess (@fig-china) and growing global influence, positions it as a significant and increasingly assertive actor on the world stage, potentially reshaping the existing power dynamics.
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: fig-china
+#| fig-cap: "China's Trade Balance Over Time"
+#| results: 'hide'
+library(tidyverse)       # Data management
+library(quantmod)
+library(wbstats)  # World bank stats
+
+# Set the cache directory
+options(wbstats.cache_dir = "wb_cache")
+
+# Select the desired indicators
+indicators2 <- c(
+  "TX.VAL.MRCH.CD.WT", # Merchandise exports (current US$)
+  "TM.VAL.MRCH.CD.WT"  # Merchandise imports (current US$)
+)
+
+# Get trade balance in goods data for China
+china_trade_balance_goods_data <- wb_data(
+  country = "CN",
+  indicator = indicators2,
+  start_date = 2000,
+  end_date = 2023
+)
+
+# Tidy the data for plotting
+tidy_trade_balance_data <- function(data) {
+  data %>%
+    mutate(date = as.Date(paste0(date, "-01-01"), format = "%Y-%m-%d"),
+           trade_balance_goods = `TX.VAL.MRCH.CD.WT` - `TM.VAL.MRCH.CD.WT`) # Calculate trade balance
+}
+
+china_trade_balance_goods_tidy <- tidy_trade_balance_data(china_trade_balance_goods_data)
+
+# Create the bar plot with billions suffix
+ggplot(china_trade_balance_goods_tidy, aes(x = date, y = trade_balance_goods)) +
+  geom_bar(stat = "identity", fill = my_palette2[6]) +
+  labs(
+    title = "China's Merchandise Trade Balance in Goods (Current US$)",
+    x = "",
+    y = "Trade Balance (US$ Billions)",
+    caption = "Source: World Bank via wbstats"
+  ) +
+  scale_y_continuous(labels = function(x) paste0(x / 1e9, "B")) +
+  theme_minimal()+
+  theme(plot.title = element_text(color = "black", size = rel(1.0), face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = rel(0.8), face = "bold", hjust = 0.5),
+        plot.caption = element_text(face = "italic", hjust = 1, size = rel(0.6)),
+        axis.text = element_text(size = rel(0.9), color = "black"),
+        plot.background = element_rect(fill = my_palette2[11],
+                                       color = NA),
+        panel.background = element_rect(fill = my_palette2[11],
+                                        color = NA))
+```
+
+China's sustained and substantial trade surplus over time built upon extensive infrastructure, a skilled workforce, and established supply chains, makes any significant decoupling a complex and costly undertaking for nations worldwide, including the U.S. Despite policy efforts aimed at reshoring manufacturing, US companies face considerable hurdles in replicating China's scale, efficiency, and cost-competitiveness. The deep integration of Chinese manufacturing into global value chains means that decoupling would likely lead to significant disruptions and inflationary pressures, highlighting the formidable challenge the US faces inThis enduring manufacturing prowess positions China for continued economic ascent on the global stage. attempting to bring a substantial portion of its manufacturing base back home. 
+
